@@ -1,0 +1,199 @@
+app:
+  title: SDP
+  baseUrl: http://localhost:3000
+  support:
+    url: 'https://github.com/Alaska-ECommerce/sdp-backstage/issues'
+    items:
+      - title: Teams channel
+        icon: chat
+        links:
+          - url: 'https://teams.microsoft.com/l/channel/19%3a8e7c9974f33f4caa814c4ea8a56b63df%40thread.skype/EE%2520(Engineering%2520Enablement)%2520Public%2520Channel?groupId=aa01c782-8f88-480d-85f1-0927b1757977&tenantId=0f44c5d4-42b0-45c2-bf55-d0fea8430d33'
+            title: 'EE (Engineering Enablement) Public Channel'
+
+organization:
+  name: AlaskaAir
+
+backend:
+  # Used for enabling authentication, secret is shared by all backend plugins
+  # See https://backstage.io/docs/tutorials/backend-to-backend-auth for
+  # information on the format
+  auth:
+    keys:
+      - secret: ${BACKEND_SECRET}
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+  csp:
+    connect-src: ["'self'", 'http:', 'https:']
+    img-src: ["'self'", "data:", "https://user-images.githubusercontent.com", "https://avatars.githubusercontent.com", "https://imgs.xkcd.com"]
+    # Content-Security-Policy directives follow the Helmet format: https://helmetjs.github.io/#reference
+    # Default Helmet Content-Security-Policy values can be removed by setting the key to false
+  cors:
+    origin: http://localhost:3000
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+  # config options: https://node-postgres.com/api/client
+  database:
+    #client: pg
+    #  connection:
+    #    host: ${POSTGRES_HOST}
+    #    port: ${POSTGRES_PORT}
+    #    user: ${POSTGRES_USER}
+    #    password: ${POSTGRES_PASSWORD}
+        #ssl:
+        #  rejectUnauthorized: false
+        # https://node-postgres.com/features/ssl
+        # you can set the sslmode configuration option via the `PGSSLMODE` environment variable
+        # see https://www.postgresql.org/docs/current/libpq-ssl.html Table 33.1. SSL Mode Descriptions (e.g. require)
+        # ssl:
+        #   ca: # if you have a CA file and want to verify it you can uncomment this section
+        #     $file: <file-path>/ca/server.crt
+    client: better-sqlite3
+    connection: ':memory:'
+  cache:
+    store: memory
+  # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
+
+integrations:
+  github:
+    - host: github.com
+      token: ${GITHUB_TOKEN}
+    ### Example for how to add your GitHub Enterprise instance using the API:
+    # - host: ghe.example.net
+    #   apiBaseUrl: https://ghe.example.net/api/v3
+    #   token: ${GHE_TOKEN}
+  https:
+    - host: github.com
+      token: ${GITHUB_TOKEN}
+
+proxy:
+  '/argocd/api':
+    target: https://argocd.nonprod.sdp.devaag.com/api/v1/
+    changeOrigin: true
+    secure: true
+    headers:
+      Cookie:
+        $env: ARGOCD_AUTH_TOKEN
+  '/sonarqube':
+    target: https://sonarqubestaging.alaskaair.com/api
+    allowedMethods: ['GET']
+    auth: '${SONARQUBE_TOKEN}' # note that the colon after the token is required
+  '/githubteams':
+    target: https://api.github.com/orgs/Alaska-ECommerce/teams?per_page=100
+    allowedMethods: [ 'GET' ]
+    headers:
+      Authorization: 'Bearer ${GITHUB_TOKEN}'
+  '/xkcd-proxy':
+    target: https://xkcd.com
+
+sonarQube:
+  baseUrl: https://sonarqubestaging.alaskaair.com/
+
+# Reference documentation http://backstage.io/docs/features/techdocs/configuration
+# Note: After experimenting with basic setup, use CI/CD to generate docs
+# and an external cloud storage when deploying TechDocs for production use-case.
+# https://backstage.io/docs/features/techdocs/how-to-guides#how-to-migrate-from-techdocs-basic-to-recommended-deployment-approach
+techdocs:
+  builder: 'local' # Alternatives - 'external'
+  generator:
+    runIn: 'docker' # Alternatives - 'local'
+  publisher:
+    type: 'local'
+
+azureDevOps:
+  host: dev.azure.com
+  token: ${AZURE_TOKEN}
+  organization: itsals
+
+chip: 
+  baseUrl: ${CHIP_URL}
+  clientID: ${CHIP_CLIENT_ID}
+  clientSecret: ${CHIP_CLIENT_SECRET}
+  resource: ${CHIP_RESOURCE}
+
+spin:
+  baseUrl:  ${SPIN_URL}
+  clientID: ${SPIN_CLIENT_ID}
+  clientSecret: ${SPIN_CLIENT_SECRET}
+  spinResource: ${SPIN_RESOURCE}
+
+sumo:
+  otelTraceUrl: ${OTEL_TRACE_URL}
+
+auth:
+  # see https://backstage.io/docs/auth/ to learn about auth providers
+  environment: development
+  providers:
+    microsoft:
+      development:
+        clientId: ${AUTH_MICROSOFT_CLIENT_ID}
+        clientSecret: ${AUTH_MICROSOFT_CLIENT_SECRET}
+        tenantId: ${AUTH_MICROSOFT_TENANT_ID}
+    github:
+      development:
+        clientId: ${AUTH_GITHUB_CLIENT_ID_JETWAY}
+        clientSecret: ${AUTH_GITHUB_CLIENT_SECRET_JETWAY_LOCAL}
+    https:
+      development:
+        host: github.com
+        token: ${GITHUB_TOKEN}
+scaffolder:
+# see https://backstage.io/docs/features/software-templates/configuration for software template options
+
+catalog:
+  import:
+    entityFilename: catalog-info.yaml
+    pullRequestBranchName: backstage-integration
+  rules:
+    - allow: [Component, System, API, Resource, Location]
+  locations:
+    # Backstage example components
+    - type: url
+      target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/all-components.yaml
+
+    # Backstage example systems
+    - type: url
+      target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/all-systems.yaml
+
+    # Backstage example APIs
+    - type: url
+      target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/all-apis.yaml
+
+    # Backstage example resources
+    - type: url
+      target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/all-resources.yaml
+
+    # Backstage example organization groups
+    - type: url
+      target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/acme/org.yaml
+
+    # Backstage templates
+    # - type: file
+    #   target: ../../templates/svelte-template-nonprod.yaml
+    #   rules:
+    #     - allow: [ Template, Plugin ]
+
+    # - type: file
+    #   target: ../../templates/nodejs-template-nonprod.yaml
+    #   rules:
+    #     - allow: [ Template, Plugin ]
+
+    # - type: file
+    #   target: ../../templates/reactjs-template-nonprod.yaml
+    #   rules:
+    #     - allow: [ Template, Plugin ]
+
+    - type: file
+      target: ../../templates/go-template-nonprod.yaml
+      rules:
+        - allow: [ Template, Plugin ]
+
+    - type: file
+      target: ../../templates/dotnetcore-template-nonprod.yaml
+      rules:
+        - allow: [ Template, Plugin ]
+
+    # - type: file
+    #   target: ../../templates/retrofit-template-nonprod.yaml
+    #   rules:
+    #     - allow: [ Template, Plugin ]         
